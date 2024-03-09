@@ -27,7 +27,7 @@ def is_spotify_playlist_link(link):
     """
     Check if Spotify playlist link is valid
     """
-    spotify_pattern = r'^https://open\.spotify\.com/playlist/\w+$'
+    spotify_pattern = r'^https://open\.spotify\.com/playlist/\w+(\?.*)?$'
     return re.match(spotify_pattern, link) is not None
 
 
@@ -36,7 +36,7 @@ def search_youtube(song_name):
     Search on YouTube for song_name and returns the first appearance
     """
     youtube = googleapiclient.discovery.build(
-            'youtube', 'v3', developerKey=config.APIKEY_YT)
+        'youtube', 'v3', developerKey=config.YOUTUBE_API_KEY)
     request = youtube.search().list(
         part='snippet',
         q=song_name,
@@ -156,8 +156,10 @@ def main(spotify_playlist_link, output_dir):
         print('Error: Invalid Spotify playlist link')
         sys.exit()
 
-    import ipdb; ipdb.set_trace()
-    spotify = SpotifyAPI(config.CLIENT_ID, config.CLIENT_SECRET)
+    spotify = SpotifyAPI(
+        config.SPOTIFY_CLIENT_ID,
+        config.SPOTIFY_CLIENT_SECRET
+    )
 
     playlist_id = spotify.playlist_id_extractor(spotify_playlist_link)
     playlist_info = spotify.get_playlist_info(playlist_id)
