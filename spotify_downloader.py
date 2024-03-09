@@ -13,9 +13,10 @@ Args:
 """
 import os
 import re
-import requests
 import sys
+
 from datetime import datetime, timedelta
+import requests
 
 import googleapiclient.discovery
 from pytube import YouTube
@@ -77,16 +78,15 @@ def get_spotify_credentials(client_id, client_secret):
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded'
     }
-    response = requests.post(url, data=payload, headers=headers)
+    response = requests.post(url, data=payload, headers=headers, timeout=30)
     if response.status_code == 200:
         response_dict = response.json()
         api_headers = {
             "Authorization": f"{response_dict['token_type']} {response_dict['access_token']}"
         }
         return api_headers
-    else:
-        print('Could not get Spotify token:', response.status_code)
-        sys.exit()
+    print('Could not get Spotify token:', response.status_code)
+    sys.exit()
 
 
 class SpotifyAPI():
@@ -108,7 +108,7 @@ class SpotifyAPI():
         Check if token already has expired
         """
         return self.expiration is None or datetime.now() >= self.expiration
-    
+
     def set_credentials(self):
         """
         Set a new token if necessary
@@ -125,15 +125,14 @@ class SpotifyAPI():
         Get info about a playlist
         """
         url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
-        
+
         self.set_credentials()
-        response = requests.get(url, headers=self.credentials)
+        response = requests.get(url, headers=self.credentials, timeout=30)
         if response.status_code == 200:
             playlist_data = response.json()
             return playlist_data
-        else:
-            print(f"Failed to retrieve playlist information. Status code: {response.status_code}")
-            sys.exit()
+        print(f"Failed to retrieve playlist information. Status code: {response.status_code}")
+        sys.exit()
 
     def get_songs(self, playlist_info):
         """
@@ -152,6 +151,9 @@ class SpotifyAPI():
 
 
 def main(spotify_playlist_link, output_dir):
+    """
+    Main function. Entire process to download a Spotify playlist from YouTube
+    """
     if not is_spotify_playlist_link(spotify_playlist_link):
         print('Error: Invalid Spotify playlist link')
         sys.exit()
@@ -184,6 +186,6 @@ if __name__ == '__main__':
     if len(sys.argv) != 3:
         print("Usage: python program.py arg1 arg2")
     else:
-        spotify_playlist_link = sys.argv[1]
-        output_dir = sys.argv[2]
-        main(spotify_playlist_link, output_dir)
+        arg1 = sys.argv[1]
+        arg2 = sys.argv[2]
+        main(arg1, arg2)
