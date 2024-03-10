@@ -14,6 +14,7 @@ Args:
 import os
 import re
 import sys
+import subprocess
 
 from datetime import datetime, timedelta
 import requests
@@ -87,6 +88,24 @@ def get_spotify_credentials(client_id, client_secret):
         return api_headers
     print('Could not get Spotify token:', response.status_code)
     sys.exit()
+
+
+def reencode_file(filepath):
+    """
+    Reencode file to mp3
+    """
+    filename, _ = os.path.splitext(filepath)
+    output_filename = f'{filename}.mp3'
+    command = [
+        'ffmpeg',
+        '-i', filepath,
+        '-vn',
+        '-acodec', 'libmp3lame',
+        '-q:a', '4',
+        output_filename
+    ]
+    subprocess.run(command)
+    os.remove(filepath)
 
 
 class SpotifyAPI():
@@ -169,6 +188,7 @@ def main(spotify_playlist_link, output_dir):
 
     for song in songs:
         song_name = format_song_name(song)
+        print(f'Downloading: {song_name}')
         video_info = search_youtube(song_name)
         video_link = create_youtube_url(video_info['id']['videoId'])
 
@@ -176,10 +196,7 @@ def main(spotify_playlist_link, output_dir):
 
         video = yt.streams.filter(only_audio=True).first()
         out_file = video.download(output_path=output_dir)
-
-        base, _ = os.path.splitext(out_file)
-        new_file = base + '.mp3'
-        os.rename(out_file, new_file)
+        reencode_file(out_file)
 
 
 if __name__ == '__main__':
